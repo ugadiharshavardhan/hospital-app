@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx shadcn@latest add button card input form dialog select tabs badge avatar table calendar dropdown-menu sheet skeleton separator label textarea progress --yes --overwrite)",
+      "Bash(npx shadcn@latest add accordion tooltip popover --yes --overwrite)",
+      "Bash(npm run *)",
+      "Bash(node -e \"const l = require\\('./node_modules/lucide-react/dist/cjs/lucide-react.js'\\); console.log\\(Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('linked'\\) || k.toLowerCase\\(\\).includes\\('share'\\) || k.toLowerCase\\(\\).includes\\('message'\\)\\)\\)\")",
+      "Bash(node -e \"const l = require\\('./node_modules/lucide-react/dist/cjs/lucide-react.js'\\); const keys = Object.keys\\(l\\).filter\\(k => !k.startsWith\\('Lucide'\\) && !k.endsWith\\('Icon'\\)\\); console.log\\(keys.filter\\(k => k.toLowerCase\\(\\).includes\\('link'\\) || k.toLowerCase\\(\\).includes\\('globe'\\) || k.toLowerCase\\(\\).includes\\('share'\\) || k.toLowerCase\\(\\).includes\\('camera'\\)  \\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(sed -i 's/className=\"min-h-screen bg-gray-50 pt-20 pb-12\"/className=\"min-h-screen bg-gray-50 pt-[116px] pb-12\"/' src/app/appointments/book/page.js)",
+      "Bash(sed -i 's/className=\"min-h-screen bg-gray-50 pt-20\"/className=\"min-h-screen bg-gray-50 pt-[116px]\"/g' src/app/contact/page.js src/app/departments/page.js \"src/app/departments/[slug]/page.js\" \"src/app/doctors/[id]/page.js\" src/app/emergency/page.js)",
+      "Bash(grep -rn \"bg-\\\\${\" src/ --include=\"*.jsx\" --include=\"*.js\")",
+      "Bash(node -e \"const zod = require\\('./node_modules/zod/dist/index.js'\\); console.log\\('Zod version:', zod.z?.object ? 'v4 ok' : 'broken'\\)\")",
+      "Bash(sed -i 's/session.user.role !== '\\\\''doctor'\\\\''\\) redirect\\('\\\\''\\\\/login'\\\\''\\)/session.user.role !== '\\\\''doctor'\\\\''\\) redirect\\('\\\\''\\\\/dashboard'\\\\''\\)/g' 'src/app/\\(dashboard\\)/doctor/page.js' 'src/app/\\(dashboard\\)/doctor/appointments/page.js' 'src/app/\\(dashboard\\)/doctor/patients/page.js' 'src/app/\\(dashboard\\)/doctor/profile/page.js')",
+      "Bash(sed -i 's/session.user.role !== '\\\\''admin'\\\\''\\) redirect\\('\\\\''\\\\/login'\\\\''\\)/session.user.role !== '\\\\''admin'\\\\''\\) redirect\\('\\\\''\\\\/dashboard'\\\\''\\)/g' 'src/app/\\(dashboard\\)/admin/analytics/page.js' 'src/app/\\(dashboard\\)/admin/departments/page.js')",
+      "Bash(sed -i 's/\\\\!\\\\['\\\\''admin'\\\\'', '\\\\''receptionist'\\\\''\\\\].includes\\(session.user.role\\)\\) redirect\\('\\\\''\\\\/login'\\\\''\\)/!['\\\\''admin'\\\\'', '\\\\''receptionist'\\\\''].includes\\(session.user.role\\)\\) redirect\\('\\\\''\\\\/dashboard'\\\\''\\)/g' 'src/app/\\(dashboard\\)/admin/page.js' 'src/app/\\(dashboard\\)/admin/patients/page.js' 'src/app/\\(dashboard\\)/admin/appointments/page.js' 'src/app/\\(dashboard\\)/admin/profile/page.js')",
+      "Bash(sed -i 's/\\\\!\\\\['\\\\''admin'\\\\''\\\\].includes\\(session.user.role\\)\\) redirect\\('\\\\''\\\\/login'\\\\''\\)/!['\\\\''admin'\\\\''].includes\\(session.user.role\\)\\) redirect\\('\\\\''\\\\/dashboard'\\\\''\\)/g' 'src/app/\\(dashboard\\)/admin/doctors/page.js')",
+      "Bash(find \"src/app/\\(dashboard\\)\" -name \"notifications\" -type d)",
+      "Bash(find \"src/app/\\(dashboard\\)\" -path \"*notification*\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\U HARSHA VARDHAN\\Desktop\\hospital-prototype",
+      "C:\\Users\\U HARSHA VARDHAN\\Desktop\\hospital-prototype\\src\\app\\api\\doctors",
+      "C:\\Users\\U HARSHA VARDHAN\\Desktop\\hospital-prototype\\src\\app\\api\\auth\\[...nextauth]",
+      "C:\\Users\\U HARSHA VARDHAN\\Desktop\\hospital-prototype\\src\\app\\api\\notifications"
+    ]
+  }
+}

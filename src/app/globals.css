@@ -1,26 +1,205 @@
 @import "tailwindcss";
 
 :root {
+  /* Base colors */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Primary: Medical Blue #2563EB = hsl(221, 83%, 53%) */
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(0, 0%, 100%);
+
+  /* Secondary */
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222, 47%, 11%);
+
+  /* Accent: Teal for healthcare */
+  --accent: hsl(174, 72%, 40%);
+  --accent-foreground: hsl(0, 0%, 100%);
+
+  /* Muted */
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+
+  /* Card */
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(222, 84%, 5%);
+
+  /* Popover */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(222, 84%, 5%);
+
+  /* Border & Input */
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --ring: hsl(221, 83%, 53%);
+
+  /* Destructive */
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Chart colors */
+  --chart-1: hsl(221, 83%, 53%);
+  --chart-2: hsl(174, 72%, 40%);
+  --chart-3: hsl(142, 71%, 45%);
+  --chart-4: hsl(0, 84%, 60%);
+  --chart-5: hsl(262, 83%, 58%);
+
+  /* Hospital-specific */
+  --hospital-blue: #2563EB;
+  --hospital-blue-dark: #1d4ed8;
+  --hospital-blue-light: #dbeafe;
+  --hospital-teal: #0d9488;
+  --hospital-teal-light: #ccfbf1;
+  --hospital-red: #dc2626;
+  --hospital-green: #16a34a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark mode intentionally disabled — always use light theme */
+
+/* Force light mode everywhere — prevents OS dark mode from inverting form colors */
+html {
+  color-scheme: light;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+}
+
+/* Guarantee visible text in ALL form elements regardless of parent color inheritance */
+input,
+textarea,
+select {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+/* Transparent-bg inputs (search bar, etc.) still need dark text */
+input[class*="bg-transparent"],
+textarea[class*="bg-transparent"] {
+  color: #111827;
+}
+
+/* Native select elements */
+select option {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+/* Autofill override — prevents browser from injecting yellow/dark bg */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #111827;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Pointer cursor on all interactive elements ─────────────────────────── */
+a,
+button,
+select,
+label,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="checkbox"],
+[role="radio"],
+[role="switch"],
+[role="combobox"],
+[data-radix-collection-item],
+summary {
+  cursor: pointer;
+}
+
+/* Disabled elements should always show not-allowed */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[disabled],
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
 }
