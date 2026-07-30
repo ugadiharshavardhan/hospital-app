@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Phone, Shield, Award, Clock } from 'lucide-react';
 import { EMERGENCY_NUMBER } from '@/utils/constants';
 
+import { useSession } from 'next-auth/react';
+
 export function Hero() {
+  const { data: session } = useSession();
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 pt-[116px]">
       {/* Background pattern */}
@@ -70,16 +74,29 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-wrap gap-4"
             >
-              <Button
-                size="lg"
-                className="bg-white text-blue-900 hover:bg-blue-50 font-semibold shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-                asChild
-              >
-                <Link href="/appointments/book">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Book Appointment
-                </Link>
-              </Button>
+              {session?.user?.role === 'admin' ? (
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-900 hover:bg-blue-50 font-semibold shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                  asChild
+                >
+                  <Link href="/admin">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Admin Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-900 hover:bg-blue-50 font-semibold shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                  asChild
+                >
+                  <Link href="/appointments/book">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Book Appointment
+                  </Link>
+                </Button>
+              )}
               <Button
                 size="lg"
                 variant="outline"

@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatShortDate, getStatusColor } from '@/utils/formatters';
 import { getInitials } from '@/lib/utils';
 
-export function AppointmentTable({ appointments = [], onStatusChange, showPatient = true }) {
+export function AppointmentTable({ appointments = [], onStatusChange, onReschedule, showPatient = true }) {
   if (!appointments.length) {
     return (
       <div className="text-center py-12 text-gray-400">
@@ -27,7 +27,7 @@ export function AppointmentTable({ appointments = [], onStatusChange, showPatien
             <TableHead>Date &amp; Time</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {(onStatusChange || onReschedule) && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -44,6 +44,11 @@ export function AppointmentTable({ appointments = [], onStatusChange, showPatien
                     </Avatar>
                     <div>
                       <p className="font-medium text-sm text-gray-900">{person?.name || 'N/A'}</p>
+                      {apt.department && (
+                        <p className="text-[11px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded w-fit mt-0.5 mb-0.5">
+                          {apt.department}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-400">{person?.email}</p>
                     </div>
                   </div>
@@ -57,6 +62,11 @@ export function AppointmentTable({ appointments = [], onStatusChange, showPatien
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {apt.slot}
                     </span>
+                    {apt.tokenNumber && (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded w-fit flex items-center gap-0.5 mt-1 border border-amber-200">
+                        Token #{apt.tokenNumber}
+                      </span>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -69,8 +79,8 @@ export function AppointmentTable({ appointments = [], onStatusChange, showPatien
                     {apt.status}
                   </span>
                 </TableCell>
-                <TableCell className="text-right">
-                  {onStatusChange && (
+                {(onStatusChange || onReschedule) && (
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="w-7 h-7">
@@ -78,15 +88,24 @@ export function AppointmentTable({ appointments = [], onStatusChange, showPatien
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'confirmed')}>Confirm</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'completed')}>Mark Complete</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'cancelled')} className="text-red-600">
-                          Cancel
-                        </DropdownMenuItem>
+                        {onStatusChange && (
+                          <>
+                            <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'confirmed')}>Confirm</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'completed')}>Mark Complete</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onStatusChange(apt._id, 'cancelled')} className="text-red-600">
+                              Cancel
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {onReschedule && (apt.status === 'pending' || apt.status === 'confirmed') && (
+                          <DropdownMenuItem onClick={() => onReschedule(apt)}>
+                            Reschedule
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  )}
-                </TableCell>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

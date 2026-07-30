@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,38 @@ import { useRouter } from 'next/navigation';
 import { TIME_SLOTS } from '@/utils/constants';
 import axios from 'axios';
 
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (document.getElementById('razorpay-script')) return resolve(true);
+    const script = document.createElement('script');
+    script.id = 'razorpay-script';
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 const steps = ['Department', 'Doctor', 'Date & Time', 'Confirm'];
+
+const getLocalDateString = (date) => {
+  const d = new Date(date);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const parseSlotToMinutes = (slot) => {
+  const [time, period] = slot.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  return hours * 60 + minutes;
+};
 
 export function BookingWizard({ doctors, departments, preselectedDoctor }) {
   const [step, setStep] = useState(0);
@@ -34,6 +65,27 @@ export function BookingWizard({ doctors, departments, preselectedDoctor }) {
       isEmergency: false,
     },
   });
+
+  const todayStr = getLocalDateString(new Date());
+  const selectedDate = form.watch('date');
+  const isToday = selectedDate === todayStr;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const filteredSlots = TIME_SLOTS.filter(slot => {
+    if (!isToday) return true;
+    return parseSlotToMinutes(slot) > currentMinutes;
+  });
+
+  useEffect(() => {
+    if (selectedDate === todayStr) {
+      const currentSlot = form.getValues('slot');
+      if (currentSlot && parseSlotToMinutes(currentSlot) <= currentMinutes) {
+        form.setValue('slot', '');
+      }
+    }
+  }, [selectedDate, todayStr, currentMinutes, form]);
 
   const watchDept = form.watch('departmentId');
   const watchDoctor = form.watch('doctorId');
@@ -60,13 +112,86 @@ export function BookingWizard({ doctors, departments, preselectedDoctor }) {
 
   const onSubmit = async (values) => {
     setLoading(true);
+    let tempAppointmentId = null;
     try {
-      await axios.post('/api/appointments', values);
-      toast.success('Appointment booked successfully!');
-      router.push('/patient/appointments');
+      const fee = selectedDoctor?.consultationFee || 500;
+      // 1. Create the appointment in DB as status: pending, paymentStatus: pending
+      const response = await axios.post('/api/appointments', { ...values, amount: fee });
+      const appointment = response.data.data;
+      tempAppointmentId = appointment._id;
+
+      // 2. Load Razorpay script
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        toast.error('Failed to load payment gateway. Check your connection.');
+        await axios.delete(`/api/appointments/${tempAppointmentId}?hard=true`);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Create Razorpay order
+      const { data: order } = await axios.post('/api/payments/create-order', {
+        amount: fee,
+        appointmentId: tempAppointmentId,
+      });
+
+      // 4. Configure options and launch payment dialog
+      const options = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'MediCare Hospital',
+        description: 'Appointment Consultation Fee',
+        image: '/favicon.ico',
+        order_id: order.orderId,
+        handler: async (response) => {
+          try {
+            // Verify payment
+            await axios.post('/api/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              appointmentId: tempAppointmentId,
+            });
+
+            // Update appointment status to confirmed since payment is verified
+            await axios.patch(`/api/appointments/${tempAppointmentId}`, {
+              status: 'confirmed'
+            });
+
+            toast.success('Appointment booked and paid successfully!');
+            router.push('/patient/appointments');
+          } catch (err) {
+            toast.error('Payment verification failed. Booking cancelled.');
+            await axios.delete(`/api/appointments/${tempAppointmentId}?hard=true`);
+            setLoading(false);
+          }
+        },
+        theme: { color: '#2563EB' },
+        modal: {
+          ondismiss: async () => {
+            toast.info('Payment cancelled. Booking was not completed.');
+            await axios.delete(`/api/appointments/${tempAppointmentId}?hard=true`);
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', async (response) => {
+        toast.error('Payment failed: ' + response.error.description);
+        await axios.delete(`/api/appointments/${tempAppointmentId}?hard=true`);
+        setLoading(false);
+      });
+      rzp.open();
+
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to book appointment');
-    } finally {
+      toast.error(err.response?.data?.error || 'Failed to initiate booking');
+      if (tempAppointmentId) {
+        try {
+          await axios.delete(`/api/appointments/${tempAppointmentId}?hard=true`);
+        } catch (_) {}
+      }
       setLoading(false);
     }
   };
@@ -169,7 +294,7 @@ export function BookingWizard({ doctors, departments, preselectedDoctor }) {
                     <FormItem>
                       <FormLabel>Appointment Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} min={new Date().toISOString().split('T')[0]} className="w-full" />
+                        <Input type="date" {...field} min={todayStr} className="w-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,7 +307,7 @@ export function BookingWizard({ doctors, departments, preselectedDoctor }) {
                     <FormItem>
                       <FormLabel>Time Slot</FormLabel>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
-                        {TIME_SLOTS.map(slot => (
+                        {filteredSlots.map(slot => (
                           <button
                             key={slot}
                             type="button"
@@ -192,6 +317,11 @@ export function BookingWizard({ doctors, departments, preselectedDoctor }) {
                             {slot}
                           </button>
                         ))}
+                        {filteredSlots.length === 0 && (
+                          <p className="text-xs text-red-500 col-span-3 sm:col-span-4 text-center py-2 font-medium">
+                            No remaining time slots for today. Please select a future date.
+                          </p>
+                        )}
                       </div>
                       <FormMessage />
                     </FormItem>

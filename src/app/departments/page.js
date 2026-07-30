@@ -34,7 +34,7 @@ export default async function DepartmentsPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-[116px]">
+      <main className="min-h-screen bg-gray-50 pt-[80px]">
         <div className="bg-gradient-to-r from-blue-900 to-blue-700 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl font-bold text-white mb-4">Our Medical Departments</h1>

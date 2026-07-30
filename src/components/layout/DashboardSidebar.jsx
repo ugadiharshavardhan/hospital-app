@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn, getInitials } from '@/lib/utils';
+import axios from 'axios';
 import {
   LayoutDashboard, Calendar, FileText, User, Bell,
   Settings, LogOut, Menu, X, Stethoscope, Users,
@@ -52,9 +53,22 @@ const navItems = {
 
 export function DashboardSidebar({ user }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const role = user?.role || 'patient';
   const links = navItems[role] || navItems.patient;
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await axios.get('/api/notifications');
+        setUnreadCount(res.data.unreadCount || 0);
+      } catch (err) {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -96,14 +110,24 @@ export function DashboardSidebar({ user }) {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all justify-between w-full',
                 active
                   ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}
             >
-              <item.icon className={cn('w-4 h-4', active ? 'text-white' : 'text-gray-400')} />
-              {item.label}
+              <div className="flex items-center gap-3">
+                <item.icon className={cn('w-4 h-4', active ? 'text-white' : 'text-gray-400')} />
+                {item.label}
+              </div>
+              {item.label === 'Notifications' && unreadCount > 0 && (
+                <span className={cn(
+                  'text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors',
+                  active ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'
+                )}>
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

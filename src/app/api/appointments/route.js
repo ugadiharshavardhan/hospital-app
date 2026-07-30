@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Appointment from '@/models/Appointment';
+import Department from '@/models/Department';
+import Notification from '@/models/Notification';
+import User from '@/models/User';
 import { auth } from '@/lib/auth';
+import { reassignTokens } from '@/utils/token';
 
 export async function GET(request) {
   const session = await auth();
@@ -47,14 +51,54 @@ export async function POST(request) {
 
     if (existing) return NextResponse.json({ error: 'Slot already booked' }, { status: 409 });
 
+    let deptName = '';
+    if (body.departmentId) {
+      const mongoose = require('mongoose');
+      let dept = null;
+      if (mongoose.Types.ObjectId.isValid(body.departmentId)) {
+        dept = await Department.findById(body.departmentId);
+      } else {
+        dept = await Department.findOne({ slug: body.departmentId });
+      }
+      if (dept) {
+        deptName = dept.name;
+      }
+    }
+
     const appointment = await Appointment.create({
       ...body,
+      department: deptName || body.departmentId,
       patientId: session.user.id,
       status: 'pending',
     });
 
+    // Recalculate tokens
+    await reassignTokens(body.doctorId, body.date);
+
+    // Fetch doctor name for notification
+    const doctor = await User.findById(body.doctorId);
+    const dateStr = new Date(body.date).toLocaleDateString();
+
+    // Create notifications
+    await Notification.create({
+      recipient: session.user.id,
+      title: 'Appointment Booked',
+      message: `Your appointment with Dr. ${doctor?.name || 'Doctor'} has been booked for ${dateStr} at ${body.slot}.`,
+      type: 'appointment',
+      link: '/patient/appointments',
+    });
+
+    await Notification.create({
+      recipient: body.doctorId,
+      title: 'New Appointment',
+      message: `New appointment booked by ${session.user.name} for ${dateStr} at ${body.slot}.`,
+      type: 'appointment',
+      link: '/doctor/appointments',
+    });
+
     return NextResponse.json({ data: appointment }, { status: 201 });
   } catch (err) {
+    console.error('Create appointment error:', err);
     return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 });
   }
 }

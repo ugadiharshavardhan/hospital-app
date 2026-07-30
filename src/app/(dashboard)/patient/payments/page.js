@@ -7,22 +7,35 @@ import { PatientPaymentsClient } from '@/components/payments/PatientPaymentsClie
 
 export const metadata = { title: 'Payments - MediCare Hospital' };
 
-export default async function PatientPaymentsPage() {
+export default async function PatientPaymentsPage({ searchParams }) {
   const session = await auth();
   if (!session || session.user.role !== 'patient') redirect('/dashboard');
 
+  const params = await searchParams;
+  const selectedDate = params.date || '';
+
   await connectDB();
 
+  const paymentQuery = { patientId: session.user.id };
+  const appointmentQuery = {
+    patientId: session.user.id,
+    paymentStatus: 'pending',
+    status: { $in: ['confirmed', 'pending'] },
+  };
+
+  if (selectedDate) {
+    const startOfDay = new Date(`${selectedDate}T00:00:00.000Z`);
+    const endOfDay = new Date(`${selectedDate}T23:59:59.999Z`);
+    paymentQuery.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    appointmentQuery.date = { $gte: startOfDay, $lte: endOfDay };
+  }
+
   const [payments, pendingAppointments] = await Promise.all([
-    Payment.find({ patientId: session.user.id })
+    Payment.find(paymentQuery)
       .sort({ createdAt: -1 })
       .limit(20)
       .lean(),
-    Appointment.find({
-      patientId: session.user.id,
-      paymentStatus: 'pending',
-      status: { $in: ['confirmed', 'pending'] },
-    })
+    Appointment.find(appointmentQuery)
       .populate('doctorId', 'name')
       .sort({ date: -1 })
       .lean(),

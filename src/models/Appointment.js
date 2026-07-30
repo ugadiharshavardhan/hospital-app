@@ -26,6 +26,7 @@ const AppointmentSchema = new mongoose.Schema(
     cancelReason: String,
     completedAt: Date,
     meetingLink: String,
+    tokenNumber: Number,
   },
   { timestamps: true }
 );

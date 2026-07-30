@@ -6,7 +6,12 @@ import { DoctorCard } from '@/components/doctors/DoctorCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Calendar, Clock, Check, ArrowRight, Stethoscope } from 'lucide-react';
 
+import { useSession } from 'next-auth/react';
+
 export function DepartmentDetailClient({ department, doctors }) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
+
   const colorMap = {
     red: 'from-red-900 via-red-800 to-red-700',
     purple: 'from-purple-900 via-purple-800 to-purple-700',
@@ -41,11 +46,13 @@ export function DepartmentDetailClient({ department, doctors }) {
                 </p>
               )}
               <div className="flex gap-3 mt-6">
-                <Button className="bg-white text-gray-900 hover:bg-gray-100" asChild>
-                  <Link href={`/appointments/book`}>
-                    <Calendar className="w-4 h-4 mr-2" /> Book Appointment
-                  </Link>
-                </Button>
+                {!isAdmin && (
+                  <Button className="bg-white text-gray-900 hover:bg-gray-100" asChild>
+                    <Link href={`/appointments/book`}>
+                      <Calendar className="w-4 h-4 mr-2" /> Book Appointment
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" asChild>
                   <Link href="/doctors">Find Doctors</Link>
                 </Button>

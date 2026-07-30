@@ -1,6 +1,7 @@
+import { Suspense } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import Link from 'next/link';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
 
 export const metadata = { title: 'Login - MediCare Hospital' };
 
@@ -57,7 +58,9 @@ export default function LoginPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
             <p className="text-gray-500">Sign in to your patient portal</p>
           </div>
-          <LoginForm />
+          <Suspense fallback={<div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-blue-600" /></div>}>
+            <LoginForm />
+          </Suspense>
           <p className="text-center text-sm text-gray-500 mt-6">
             Don&apos;t have an account?{' '}
             <Link href="/register" className="text-blue-600 hover:underline font-medium">Create one</Link>

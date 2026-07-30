@@ -19,9 +19,14 @@ import { getInitials } from '@/lib/utils';
 import { BLOOD_GROUPS } from '@/utils/constants';
 import axios from 'axios';
 
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+
 export function PatientProfileClient({ user, patient }) {
   const [loading, setLoading] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+  const router = useRouter();
+  const { update } = useSession();
 
   const form = useForm({
     defaultValues: {
@@ -58,6 +63,8 @@ export function PatientProfileClient({ user, patient }) {
         dateOfBirth: values.dateOfBirth,
         allergies: values.allergies ? values.allergies.split(',').map(a => a.trim()).filter(Boolean) : [],
       });
+      await update({ name: values.name });
+      router.refresh();
       toast.success('Profile updated successfully!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Update failed');

@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Star, Calendar, Clock } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
+import { useSession } from 'next-auth/react';
+
 export function DoctorCard({ doctor }) {
   const user = doctor.userId || {};
   const isAvailable = doctor.availability?.some(d => d.isAvailable);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
 
   return (
     <motion.div
@@ -57,11 +61,13 @@ export function DoctorCard({ doctor }) {
             <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
               <Link href={`/doctors/${user._id}`}>View Profile</Link>
             </Button>
-            <Button size="sm" className="flex-1 text-xs bg-blue-600 hover:bg-blue-700" asChild>
-              <Link href={`/appointments/book?doctor=${user._id}`}>
-                <Calendar className="w-3 h-3 mr-1" /> Book
-              </Link>
-            </Button>
+            {!isAdmin && (
+              <Button size="sm" className="flex-1 text-xs bg-blue-600 hover:bg-blue-700" asChild>
+                <Link href={`/appointments/book?doctor=${user._id}`}>
+                  <Calendar className="w-3 h-3 mr-1" /> Book
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

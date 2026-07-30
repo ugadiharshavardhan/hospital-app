@@ -33,7 +33,7 @@ export default async function DoctorProfilePage({ params }) {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-[116px]">
+      <main className="min-h-screen bg-gray-50 pt-[80px]">
         <DoctorProfileClient doctor={JSON.parse(JSON.stringify(data))} />
       </main>
       <Footer />

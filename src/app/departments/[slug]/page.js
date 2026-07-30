@@ -42,7 +42,7 @@ export default async function DepartmentDetailPage({ params }) {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-[116px]">
+      <main className="min-h-screen bg-gray-50 pt-[80px]">
         <DepartmentDetailClient
           department={JSON.parse(JSON.stringify(department))}
           doctors={JSON.parse(JSON.stringify(doctors))}

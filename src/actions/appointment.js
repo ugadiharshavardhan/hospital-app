@@ -41,10 +41,27 @@ export async function bookAppointment(formData) {
     });
     if (existing) return { error: 'This slot is already booked. Please choose another.' };
 
+    let deptName = '';
+    if (data.departmentId) {
+      const mongoose = require('mongoose');
+      const Department = require('@/models/Department').default;
+      let dept = null;
+      if (mongoose.Types.ObjectId.isValid(data.departmentId)) {
+        dept = await Department.findById(data.departmentId);
+      } else {
+        dept = await Department.findOne({ slug: data.departmentId });
+      }
+      if (dept) {
+        deptName = dept.name;
+      }
+    }
+
+    const mongoose = require('mongoose');
     const appointment = await Appointment.create({
       patientId: session.user.id,
       doctorId: data.doctorId,
-      departmentId: data.departmentId,
+      departmentId: mongoose.Types.ObjectId.isValid(data.departmentId) ? data.departmentId : undefined,
+      department: deptName || data.departmentId,
       date: new Date(data.date),
       slot: data.slot,
       type: data.type,

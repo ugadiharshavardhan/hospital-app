@@ -1,16 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { loginSchema } from '@/schemas/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, Lock, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+
+const ERROR_MESSAGES = {
+  Configuration:    'Server configuration error. Check that NEXTAUTH_URL and AUTH_SECRET are set correctly in your environment.',
+  AccessDenied:     'Access denied. Your account may be inactive.',
+  Verification:     'Email not verified. Check your inbox.',
+  CredentialsSignin:'Invalid email or password.',
+  Default:          'An unexpected error occurred. Please try again.',
+};
 
 const DEMO_ACCOUNTS = [
   { label: 'Admin',   email: 'admin@medicare.com',      password: 'Password123', color: 'bg-purple-50 text-purple-700 border-purple-200' },
@@ -21,14 +30,18 @@ const DEMO_ACCOUNTS = [
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(null);
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get('error');
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const doLogin = async (email, password) => {
+  const doLogin = async (email, password, demoLabel = null) => {
     setLoading(true);
+    if (demoLabel) setLoadingDemo(demoLabel);
     try {
       const result = await signIn('credentials', {
         email,
@@ -59,6 +72,7 @@ export function LoginForm() {
       toast.error('Something went wrong. Check the console for details.');
     } finally {
       setLoading(false);
+      setLoadingDemo(null);
     }
   };
 
@@ -68,12 +82,30 @@ export function LoginForm() {
   const loginAsDemo = async (demo) => {
     form.setValue('email', demo.email);
     form.setValue('password', demo.password);
-    await doLogin(demo.email, demo.password);
+    await doLogin(demo.email, demo.password, demo.label);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* URL error banner (e.g. ?error=Configuration after redirect) */}
+        {urlError && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-700">Login Error: {urlError}</p>
+              <p className="text-xs text-red-500 mt-0.5">
+                {ERROR_MESSAGES[urlError] || ERROR_MESSAGES.Default}
+              </p>
+              {urlError === 'Configuration' && (
+                <p className="text-xs text-red-400 mt-1">
+                  Check the server console for the real error (often a MongoDB Atlas IP whitelist issue).
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="email"
@@ -143,7 +175,7 @@ export function LoginForm() {
                 onClick={() => loginAsDemo(demo)}
                 className={`text-xs border rounded-lg py-2 px-1 font-medium transition-all hover:opacity-80 disabled:opacity-40 ${demo.color}`}
               >
-                {loading ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : demo.label}
+                {loadingDemo === demo.label ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : demo.label}
               </button>
             ))}
           </div>

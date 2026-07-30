@@ -46,11 +46,21 @@ export function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  const isDashboardRoute = pathname.startsWith('/admin') || 
+                           pathname === '/doctor' ||
+                           pathname.startsWith('/doctor/') || 
+                           pathname.startsWith('/patient') ||
+                           pathname.startsWith('/dashboard');
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (isDashboardRoute) {
+    return null;
+  }
 
   const getDashboardLink = () => {
     const role = session?.user?.role;
@@ -59,10 +69,18 @@ export function Navbar() {
     return '/patient';
   };
 
+  const filteredNavLinks = navLinks.filter(link => {
+    if (link.href === '/appointments/book' && session?.user?.role === 'admin') {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <motion.header
       className={cn(
-        'fixed top-9 left-0 right-0 z-40 bg-white transition-all duration-300',
+        'fixed left-0 right-0 z-40 bg-white transition-all duration-300',
+        pathname === '/' ? 'top-9' : 'top-0',
         scrolled ? 'shadow-md' : 'shadow-sm border-b border-gray-100'
       )}
       initial={{ y: -100 }}
@@ -88,7 +106,7 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
+            {filteredNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -148,14 +166,9 @@ export function Navbar() {
                     <p className="font-medium">{session.user.name}</p>
                     <p className="text-xs text-gray-500 capitalize">{session.user.role}</p>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+
                   <DropdownMenuItem asChild>
-                    <Link href={getDashboardLink()} className="flex items-center gap-2">
-                      <LayoutDashboard className="w-4 h-4" /> Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/patient/profile" className="flex items-center gap-2">
+                    <Link href={session?.user?.role ? `/${session.user.role}/profile` : '/patient/profile'} className="flex items-center gap-2">
                       <User className="w-4 h-4" /> Profile
                     </Link>
                   </DropdownMenuItem>
@@ -196,7 +209,7 @@ export function Navbar() {
                     <span className="text-lg font-bold">MediCare</span>
                   </Link>
                   <nav className="flex flex-col gap-1">
-                    {navLinks.map((link) => (
+                    {filteredNavLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}

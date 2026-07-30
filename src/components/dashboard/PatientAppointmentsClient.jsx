@@ -1,44 +1,72 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AppointmentTable } from './AppointmentTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'sonner';
+import { Plus, X } from 'lucide-react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { RescheduleDialog } from '@/components/appointments/RescheduleDialog';
 
 export function PatientAppointmentsClient({ appointments: initial }) {
   const [appointments, setAppointments] = useState(initial);
+  const [reschedulingAppt, setReschedulingAppt] = useState(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const dateFilter = searchParams.get('date') || '';
+
+  useEffect(() => {
+    setAppointments(initial);
+  }, [initial]);
+
+  const handleDateChange = (val) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (val) {
+      params.set('date', val);
+    } else {
+      params.delete('date');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const filterByStatus = (status) => {
     if (status === 'all') return appointments;
     return appointments.filter(a => a.status === status);
   };
 
-  const handleCancel = async (id) => {
-    if (!confirm('Cancel this appointment?')) return;
-    try {
-      await axios.delete(`/api/appointments/${id}`);
-      setAppointments(prev => prev.map(a => a._id === id ? { ...a, status: 'cancelled' } : a));
-      toast.success('Appointment cancelled');
-    } catch {
-      toast.error('Failed to cancel');
-    }
-  };
-
   return (
     <div className="space-y-6 pt-14 lg:pt-0">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Appointments</h1>
           <p className="text-gray-500 text-sm">Track and manage your appointments</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700" asChild>
-          <Link href="/appointments/book"><Plus className="w-4 h-4 mr-2" /> Book New</Link>
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="relative flex items-center">
+            <Input
+              type="date"
+              className="w-40 bg-white pr-8 text-xs h-9 rounded-xl border-gray-200"
+              value={dateFilter}
+              onChange={(e) => handleDateChange(e.target.value)}
+            />
+            {dateFilter && (
+              <button
+                onClick={() => handleDateChange('')}
+                className="absolute right-2.5 text-gray-400 hover:text-gray-600 p-0.5 rounded-full"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <Button className="bg-blue-600 hover:bg-blue-700 h-9 rounded-xl text-xs" asChild>
+            <Link href="/appointments/book"><Plus className="w-4 h-4 mr-2" /> Book New</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -53,12 +81,19 @@ export function PatientAppointmentsClient({ appointments: initial }) {
               <AppointmentTable
                 appointments={filterByStatus(status)}
                 showPatient={false}
-                onStatusChange={status !== 'cancelled' && status !== 'completed' ? (id, _) => handleCancel(id) : null}
+                onReschedule={setReschedulingAppt}
               />
             </TabsContent>
           ))}
         </Tabs>
       </div>
+
+      <RescheduleDialog
+        isOpen={!!reschedulingAppt}
+        appointment={reschedulingAppt}
+        onClose={() => setReschedulingAppt(null)}
+        onSuccess={() => router.refresh()}
+      />
     </div>
   );
 }

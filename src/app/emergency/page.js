@@ -36,7 +36,7 @@ export default function EmergencyPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-[116px]">
+      <main className="min-h-screen bg-gray-50 pt-[80px]">
         {/* Emergency Banner */}
         <div className="bg-red-600 py-6">
           <div className="max-w-7xl mx-auto px-4 text-center">

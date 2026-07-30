@@ -5,6 +5,7 @@ import Payment from '@/models/Payment';
 import Appointment from '@/models/Appointment';
 import Notification from '@/models/Notification';
 import { auth } from '@/lib/auth';
+import { reassignTokens } from '@/utils/token';
 
 export async function POST(request) {
   const session = await auth();
@@ -40,10 +41,15 @@ export async function POST(request) {
 
     // Update appointment payment status
     if (appointmentId) {
-      await Appointment.findByIdAndUpdate(appointmentId, {
-        paymentStatus: 'paid',
-        paymentId: payment?._id,
-      });
+      const appt = await Appointment.findById(appointmentId);
+      if (appt) {
+        appt.paymentStatus = 'paid';
+        appt.paymentId = payment?._id;
+        await appt.save();
+
+        // Recalculate tokens
+        await reassignTokens(appt.doctorId, appt.date);
+      }
     }
 
     // Send notification

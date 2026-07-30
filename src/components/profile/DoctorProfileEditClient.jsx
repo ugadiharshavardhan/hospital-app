@@ -19,9 +19,14 @@ import { toast } from 'sonner';
 import { getInitials } from '@/lib/utils';
 import axios from 'axios';
 
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+
 export function DoctorProfileEditClient({ user, doctor }) {
   const [loading, setLoading] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+  const router = useRouter();
+  const { update } = useSession();
 
   const form = useForm({
     defaultValues: {
@@ -54,6 +59,8 @@ export function DoctorProfileEditClient({ user, doctor }) {
         languages: values.languages ? values.languages.split(',').map(l => l.trim()).filter(Boolean) : [],
         isAvailableForOnline: values.isAvailableForOnline,
       });
+      await update({ name: values.name });
+      router.refresh();
       toast.success('Profile updated successfully!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Update failed');

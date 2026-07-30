@@ -5,7 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Calendar, Clock, Award, Languages, Phone, Briefcase, GraduationCap, CheckCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Star, Calendar, Clock, Award, Languages, Phone, Briefcase, GraduationCap, CheckCircle, ArrowLeft } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { TIME_SLOTS } from '@/utils/constants';
 
@@ -14,9 +16,25 @@ const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 export function DoctorProfileClient({ doctor }) {
   const user = doctor.userId || {};
   const availableDays = doctor.availability?.filter(d => d.isAvailable) || [];
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
+  const router = useRouter();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+      {/* Back button */}
+      <div className="mb-4 -mt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-gray-500 hover:text-gray-950 hover:bg-gray-200/50 -ml-2 gap-1.5 font-medium transition-all"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
+      </div>
+
       {/* Profile Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -70,11 +88,13 @@ export function DoctorProfileClient({ doctor }) {
               <div className="text-left sm:text-right">
                 <p className="text-2xl font-bold text-gray-900">₹{doctor.consultationFee}</p>
                 <p className="text-gray-400 text-sm">Consultation fee</p>
-                <Button className="mt-4 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" asChild>
-                  <Link href={`/appointments/book?doctor=${user._id}`}>
-                    <Calendar className="w-4 h-4 mr-2" /> Book Appointment
-                  </Link>
-                </Button>
+                {!isAdmin && (
+                  <Button className="mt-4 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" asChild>
+                    <Link href={`/appointments/book?doctor=${user._id}`}>
+                      <Calendar className="w-4 h-4 mr-2" /> Book Appointment
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -142,9 +162,11 @@ export function DoctorProfileClient({ doctor }) {
                     <p className="font-semibold text-gray-900">Online Consultation Available</p>
                     <p className="text-gray-500 text-sm">Book a video call consultation from home</p>
                   </div>
-                  <Button className="ml-auto bg-blue-600 hover:bg-blue-700" size="sm" asChild>
-                    <Link href={`/appointments/book?doctor=${user._id}&type=online`}>Book Online</Link>
-                  </Button>
+                  {!isAdmin && (
+                    <Button className="ml-auto bg-blue-600 hover:bg-blue-700" size="sm" asChild>
+                      <Link href={`/appointments/book?doctor=${user._id}&type=online`}>Book Online</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

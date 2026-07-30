@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion';
 import { RazorpayButton } from './RazorpayButton';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, CheckCircle, Clock, XCircle, Calendar, Receipt } from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, XCircle, Calendar, Receipt, X } from 'lucide-react';
 import { formatShortDate } from '@/utils/formatters';
+import { Input } from '@/components/ui/input';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 const statusConfig = {
   success: { label: 'Paid', icon: CheckCircle, cls: 'bg-green-100 text-green-700' },
@@ -14,6 +16,22 @@ const statusConfig = {
 };
 
 export function PatientPaymentsClient({ payments, pendingAppointments }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const dateFilter = searchParams.get('date') || '';
+
+  const handleDateChange = (val) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (val) {
+      params.set('date', val);
+    } else {
+      params.delete('date');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const totalPaid = payments
     .filter((p) => p.status === 'success')
     .reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -21,10 +39,28 @@ export function PatientPaymentsClient({ payments, pendingAppointments }) {
   return (
     <div className="space-y-6 pt-14 lg:pt-0">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-        <p className="text-gray-500 text-sm">Manage your appointment payments</p>
-      </motion.div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
+          <p className="text-gray-500 text-sm">Manage your appointment payments</p>
+        </div>
+        <div className="relative flex items-center self-end sm:self-auto">
+          <Input
+            type="date"
+            className="w-40 bg-white pr-8 text-xs h-9 rounded-xl border-gray-200"
+            value={dateFilter}
+            onChange={(e) => handleDateChange(e.target.value)}
+          />
+          {dateFilter && (
+            <button
+              onClick={() => handleDateChange('')}
+              className="absolute right-2.5 text-gray-400 hover:text-gray-600 p-0.5 rounded-full"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
